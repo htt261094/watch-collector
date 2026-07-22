@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:watch_collection/core/database/app_database.dart';
 import 'package:watch_collection/features/collection/data/drift_watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/data/drift_watch_repository.dart';
+import 'package:watch_collection/features/collection/data/drift_wear_log_repository.dart';
 import 'package:watch_collection/features/collection/data/photo_storage.dart';
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/domain/watch_repository.dart';
+import 'package:watch_collection/features/collection/domain/wear_log_repository.dart';
 
 /// The app-wide drift database. Disposed with the provider scope so the
 /// underlying connection is closed cleanly.
@@ -62,4 +64,19 @@ final watchPhotosProvider =
 final watchThumbnailsProvider =
     FutureProvider<Map<String, String>>((ref) async {
   return ref.watch(watchPhotoRepositoryProvider).getThumbnails();
+});
+
+/// Repository for wear tracking ("worn today"), backed by local storage.
+final wearLogRepositoryProvider = Provider<WearLogRepository>((ref) {
+  return DriftWearLogRepository(ref.watch(appDatabaseProvider));
+});
+
+/// The set of watch ids worn today. Invalidated whenever a watch is toggled
+/// worn/not-worn so the home screen reflects the latest state.
+///
+/// The current day is resolved once when the provider builds; the app is
+/// expected to be re-read (invalidated) as the user interacts, and a long-lived
+/// session spanning midnight is out of scope for M1.
+final watchesWornTodayProvider = FutureProvider<Set<String>>((ref) async {
+  return ref.watch(wearLogRepositoryProvider).getWatchIdsWornOn(DateTime.now());
 });
