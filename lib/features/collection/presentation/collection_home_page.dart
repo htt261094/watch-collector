@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
+import 'package:watch_collection/features/collection/presentation/watch_detail_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_form_page.dart';
 
 /// Landing screen: the collection as a photo gallery (issue #5).
@@ -52,7 +53,7 @@ class CollectionHomePage extends ConsumerWidget {
             watches: items,
             thumbnails: thumbnails,
             wornToday: wornToday,
-            onOpen: (watch) => _openForm(context, watch: watch),
+            onOpen: (watch) => _openDetail(context, watch),
             onEdit: (watch) => _openForm(context, watch: watch),
             onDelete: (watch) => _confirmDelete(context, ref, watch),
             onToggleWorn: (watch) =>
@@ -66,6 +67,14 @@ class CollectionHomePage extends ConsumerWidget {
   Future<void> _openForm(BuildContext context, {Watch? watch}) {
     return Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => WatchFormPage(watch: watch)),
+    );
+  }
+
+  Future<void> _openDetail(BuildContext context, Watch watch) {
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => WatchDetailPage(watchId: watch.id),
+      ),
     );
   }
 
