@@ -32,6 +32,10 @@ migrate_working_dir/
 build/
 pubspec.lock
 
+# Generated code (produced by build_runner in CI and locally)
+*.g.dart
+*.freezed.dart
+
 # Android related
 **/android/**/gradle-wrapper.jar
 **/android/.gradle

@@ -15,17 +15,24 @@ dependencies:
   flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.6.1
 
+  # Local persistence (offline, SQLite via drift)
+  drift: ^2.20.0
+  drift_flutter: ^0.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
 
-  # Riverpod code generation (optional; used when @riverpod annotations are added)
+  # Code generation
   build_runner: ^2.4.13
   riverpod_generator: ^2.6.3
   custom_lint: ^0.7.0
   riverpod_lint: ^2.6.3
+
+  # drift schema/DAO code generation
+  drift_dev: ^2.20.0
 
 flutter:
   uses-material-design: true

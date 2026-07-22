@@ -21,8 +21,13 @@ lib/
 ├── main.dart                  # Entry point, wraps the app in a ProviderScope
 ├── app.dart                   # MaterialApp + theming
 ├── core/                      # Cross-cutting concerns shared by features
-│   └── theme/
-│       └── app_theme.dart
+│   ├── theme/
+│   │   └── app_theme.dart
+│   └── database/              # Local SQLite (drift) schema, DAOs, connection
+│       ├── app_database.dart
+│       ├── tables.dart
+│       ├── connection.dart
+│       └── daos/
 └── features/
     └── collection/
         ├── domain/            # Entities + repository contracts (no framework deps)
@@ -51,8 +56,12 @@ Requires the [Flutter SDK](https://docs.flutter.dev/get-started/install)
 
 ```bash
 flutter pub get
+dart run build_runner build --delete-conflicting-outputs   # generate *.g.dart (drift)
 flutter run          # run on a connected Android device / emulator
 ```
+
+Generated sources (`*.g.dart`) are not committed — run `build_runner` after
+`pub get`.
 
 ## Quality checks
 
@@ -63,13 +72,12 @@ flutter test         # unit + widget tests
 flutter build apk --debug
 ```
 
-These same checks run in CI on every push and pull request to `main`
-(see `.github/workflows/ci.yml`).
+Run these locally before pushing.
 
 ## Notes on the repo scaffold
 
 The native `android/` configuration (Gradle, manifest, Kotlin activity) is
 committed. Generated binary artifacts that don't belong in version control —
 the Gradle wrapper JAR and launcher icons — are produced on demand by
-`flutter create --platforms=android .`, which CI runs automatically before
-building. Run that command once locally too if you build outside CI.
+`flutter create --platforms=android .`. Run that command once locally before
+building.
