@@ -14,21 +14,18 @@ class WatchDao extends DatabaseAccessor<AppDatabase> with _$WatchDaoMixin {
 
   /// All watches, most recently created first.
   Future<List<WatchRow>> getAllWatches() {
-    return (select(watches)
-          ..orderBy([(w) => OrderingTerm.desc(w.createdAt)]))
+    return (select(watches)..orderBy([(w) => OrderingTerm.desc(w.createdAt)]))
         .get();
   }
 
   /// Reactive version of [getAllWatches] — emits whenever the table changes.
   Stream<List<WatchRow>> watchAllWatches() {
-    return (select(watches)
-          ..orderBy([(w) => OrderingTerm.desc(w.createdAt)]))
+    return (select(watches)..orderBy([(w) => OrderingTerm.desc(w.createdAt)]))
         .watch();
   }
 
   Future<WatchRow?> getWatchById(String id) {
-    return (select(watches)..where((w) => w.id.equals(id)))
-        .getSingleOrNull();
+    return (select(watches)..where((w) => w.id.equals(id))).getSingleOrNull();
   }
 
   /// Inserts a new watch, or replaces the existing row with the same id.

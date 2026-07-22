@@ -49,10 +49,8 @@ class Watches extends Table {
 
   TextColumn get notes => text().nullable()();
 
-  DateTimeColumn get createdAt =>
-      dateTime().withDefault(currentDateAndTime)();
-  DateTimeColumn get updatedAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -68,14 +66,12 @@ class WatchPhotos extends Table {
 
   /// Path to the image file inside the app's storage directory.
   TextColumn get filePath => text()();
-  BoolColumn get isThumbnail =>
-      boolean().withDefault(const Constant(false))();
+  BoolColumn get isThumbnail => boolean().withDefault(const Constant(false))();
 
   /// Manual ordering within a watch's gallery.
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 
-  DateTimeColumn get createdAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -105,8 +101,7 @@ class WearLogs extends Table {
   DateTimeColumn get wornOn => dateTime()();
   TextColumn get note => text().nullable()();
 
-  DateTimeColumn get createdAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -143,8 +138,7 @@ class AccuracyMeasurements extends Table {
 
   TextColumn get note => text().nullable()();
 
-  DateTimeColumn get createdAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -179,8 +173,7 @@ class ServiceRecords extends Table {
   DateTimeColumn get nextServiceDate => dateTime().nullable()();
   TextColumn get note => text().nullable()();
 
-  DateTimeColumn get createdAt =>
-      dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
