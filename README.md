@@ -61,7 +61,7 @@ flutter run          # run on a connected Android device / emulator
 ```
 
 Generated sources (`*.g.dart`) are not committed — run `build_runner` after
-`pub get` (CI does this automatically).
+`pub get`.
 
 ## Quality checks
 
@@ -72,13 +72,12 @@ flutter test         # unit + widget tests
 flutter build apk --debug
 ```
 
-These same checks run in CI on every push and pull request to `main`
-(see `.github/workflows/ci.yml`).
+Run these locally before pushing.
 
 ## Notes on the repo scaffold
 
 The native `android/` configuration (Gradle, manifest, Kotlin activity) is
 committed. Generated binary artifacts that don't belong in version control —
 the Gradle wrapper JAR and launcher icons — are produced on demand by
-`flutter create --platforms=android .`, which CI runs automatically before
-building. Run that command once locally too if you build outside CI.
+`flutter create --platforms=android .`. Run that command once locally before
+building.
