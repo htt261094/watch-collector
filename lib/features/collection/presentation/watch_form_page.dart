@@ -6,7 +6,10 @@ import 'package:watch_collection/core/util/id_generator.dart';
 import 'package:watch_collection/features/collection/domain/movement_type.dart';
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_options.dart';
+import 'package:watch_collection/features/collection/domain/watch_photo.dart';
+import 'package:watch_collection/features/collection/domain/watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
+import 'package:watch_collection/features/collection/presentation/photo_gallery_editor.dart';
 
 /// Add / Edit Watch form (issue #3).
 ///
@@ -48,6 +51,20 @@ class _WatchFormPageState extends ConsumerState<WatchFormPage> {
   DateTime? _purchaseDate;
   bool _saving = false;
 
+  /// Stable id for this watch, minted up front so newly picked photos can be
+  /// attributed to it and persisted together with the watch on Save.
+  late final String _watchId;
+
+  /// Photos already stored for this watch (edit mode); empty in add mode until
+  /// loaded. Drives the gallery editor's initial state.
+  List<WatchPhoto> _initialPhotos = const [];
+
+  /// The gallery editor's current desired state, applied on Save.
+  List<PhotoDraft> _photoDrafts = const [];
+
+  /// Whether existing photos have finished loading (always true in add mode).
+  bool _photosLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -68,6 +85,27 @@ class _WatchFormPageState extends ConsumerState<WatchFormPage> {
     _movementType = w?.movementType;
     _complications = List<String>.from(w?.complications ?? const []);
     _purchaseDate = w?.purchaseDate;
+    _watchId = w?.id ?? IdGenerator.newId();
+
+    if (widget.isEditing) {
+      _loadPhotos();
+    } else {
+      _photosLoaded = true;
+    }
+  }
+
+  Future<void> _loadPhotos() async {
+    final photos =
+        await ref.read(watchPhotoRepositoryProvider).getPhotos(_watchId);
+    if (!mounted) return;
+    setState(() {
+      _initialPhotos = photos;
+      _photoDrafts = [
+        for (final p in photos)
+          ExistingPhoto(id: p.id, isThumbnail: p.isThumbnail),
+      ];
+      _photosLoaded = true;
+    });
   }
 
   @override
@@ -151,7 +189,7 @@ class _WatchFormPageState extends ConsumerState<WatchFormPage> {
               const SizedBox(height: 24),
               _sectionLabel(context, 'Movement'),
               DropdownButtonFormField<MovementType>(
-                value: _movementType,
+                initialValue: _movementType,
                 decoration: const InputDecoration(
                   labelText: 'Movement type',
                   border: OutlineInputBorder(),
@@ -283,6 +321,19 @@ class _WatchFormPageState extends ConsumerState<WatchFormPage> {
               ),
 
               const SizedBox(height: 24),
+              _sectionLabel(context, 'Photos'),
+              if (!_photosLoaded)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else
+                PhotoGalleryEditor(
+                  initialPhotos: _initialPhotos,
+                  onChanged: (drafts) => _photoDrafts = drafts,
+                ),
+
+              const SizedBox(height: 24),
               _sectionLabel(context, 'Notes'),
               TextFormField(
                 controller: _notes,
@@ -345,7 +396,7 @@ class _WatchFormPageState extends ConsumerState<WatchFormPage> {
     setState(() => _saving = true);
 
     final watch = Watch(
-      id: widget.watch?.id ?? IdGenerator.newId(),
+      id: _watchId,
       brand: _brand.text.trim(),
       model: _model.text.trim(),
       referenceNo: _nullIfEmpty(_referenceNo.text),
@@ -365,9 +416,16 @@ class _WatchFormPageState extends ConsumerState<WatchFormPage> {
     );
 
     try {
+      // The watch row must exist before photo rows (foreign key), so save it
+      // first, then reconcile the gallery.
       await ref.read(watchRepositoryProvider).saveWatch(watch);
+      await ref
+          .read(watchPhotoRepositoryProvider)
+          .savePhotos(watch.id, _photoDrafts);
       ref.invalidate(watchListProvider);
       ref.invalidate(watchByIdProvider(watch.id));
+      ref.invalidate(watchPhotosProvider(watch.id));
+      ref.invalidate(watchThumbnailsProvider);
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (error) {
