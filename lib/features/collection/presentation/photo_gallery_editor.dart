@@ -166,11 +166,9 @@ class _PhotoGalleryEditorState extends State<PhotoGalleryEditor> {
 
   void _openViewer(int index) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => PhotoGalleryPage(
-          imagePaths: [for (final i in _items) i.displayPath],
-          initialIndex: index,
-        ),
+      photoGalleryRoute(
+        imagePaths: [for (final i in _items) i.displayPath],
+        initialIndex: index,
       ),
     );
   }
