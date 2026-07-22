@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,6 +18,10 @@ class CollectionHomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final watches = ref.watch(watchListProvider);
+    // Thumbnails load independently; treat an error/loading state as "no
+    // thumbnail yet" so the list still renders with the fallback icon.
+    final thumbnails =
+        ref.watch(watchThumbnailsProvider).valueOrNull ?? const {};
 
     return Scaffold(
       appBar: AppBar(
@@ -46,7 +52,7 @@ class CollectionHomePage extends ConsumerWidget {
             itemBuilder: (context, index) {
               final watch = items[index];
               return ListTile(
-                leading: const Icon(Icons.watch_outlined),
+                leading: _WatchLeading(thumbnailPath: thumbnails[watch.id]),
                 title: Text('${watch.brand} ${watch.model}'),
                 subtitle: _subtitle(watch) != null
                     ? Text(_subtitle(watch)!)
@@ -116,12 +122,36 @@ class CollectionHomePage extends ConsumerWidget {
 
     if (confirmed != true) return;
 
+    // Remove the watch (rows cascade) and its photo files, then refresh.
     await ref.read(watchRepositoryProvider).deleteWatch(watch.id);
+    await ref.read(watchPhotoRepositoryProvider).deletePhotosForWatch(watch.id);
     ref.invalidate(watchListProvider);
+    ref.invalidate(watchThumbnailsProvider);
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Deleted ${watch.brand} ${watch.model}')),
+    );
+  }
+}
+
+/// List leading: the watch's thumbnail if it has one, else a generic icon.
+class _WatchLeading extends StatelessWidget {
+  const _WatchLeading({this.thumbnailPath});
+
+  final String? thumbnailPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = thumbnailPath;
+    if (path == null) {
+      return const CircleAvatar(child: Icon(Icons.watch_outlined));
+    }
+    return CircleAvatar(
+      backgroundImage: FileImage(File(path)),
+      // Fall back to the icon if the file is missing/unreadable.
+      onBackgroundImageError: (_, __) {},
+      child: null,
     );
   }
 }
