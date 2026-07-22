@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:watch_collection/core/database/connection.dart' as conn;
 import 'package:watch_collection/core/database/daos/watch_dao.dart';
 import 'package:watch_collection/core/database/daos/watch_photo_dao.dart';
+import 'package:watch_collection/core/database/daos/wear_log_dao.dart';
 import 'package:watch_collection/core/database/tables.dart';
 
 part 'app_database.g.dart';
@@ -22,7 +23,7 @@ part 'app_database.g.dart';
     ServiceRecords,
     Settings,
   ],
-  daos: [WatchDao, WatchPhotoDao],
+  daos: [WatchDao, WatchPhotoDao, WearLogDao],
 )
 class AppDatabase extends _$AppDatabase {
   /// Opens the on-device database (production use).
