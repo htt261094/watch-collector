@@ -21,8 +21,13 @@ lib/
 ├── main.dart                  # Entry point, wraps the app in a ProviderScope
 ├── app.dart                   # MaterialApp + theming
 ├── core/                      # Cross-cutting concerns shared by features
-│   └── theme/
-│       └── app_theme.dart
+│   ├── theme/
+│   │   └── app_theme.dart
+│   └── database/              # Local SQLite (drift) schema, DAOs, connection
+│       ├── app_database.dart
+│       ├── tables.dart
+│       ├── connection.dart
+│       └── daos/
 └── features/
     └── collection/
         ├── domain/            # Entities + repository contracts (no framework deps)
@@ -51,8 +56,12 @@ Requires the [Flutter SDK](https://docs.flutter.dev/get-started/install)
 
 ```bash
 flutter pub get
+dart run build_runner build --delete-conflicting-outputs   # generate *.g.dart (drift)
 flutter run          # run on a connected Android device / emulator
 ```
+
+Generated sources (`*.g.dart`) are not committed — run `build_runner` after
+`pub get` (CI does this automatically).
 
 ## Quality checks
 

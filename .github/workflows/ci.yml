@@ -35,8 +35,15 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate code (drift, riverpod)
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed .
+        # Exclude generated sources — build_runner output is not required to be
+        # dart-format clean and is regenerated here on every run.
+        run: |
+          files=$(git ls-files '*.dart' | grep -v -E '\.(g|freezed)\.dart$')
+          dart format --output=none --set-exit-if-changed $files
 
       - name: Analyze
         run: flutter analyze
