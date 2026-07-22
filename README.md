@@ -32,19 +32,23 @@ lib/
     └── collection/
         ├── domain/            # Entities + repository contracts (no framework deps)
         │   ├── watch.dart
+        │   ├── movement_type.dart
+        │   ├── watch_options.dart
         │   └── watch_repository.dart
         ├── data/              # Repository implementations (storage details)
+        │   ├── drift_watch_repository.dart
         │   └── in_memory_watch_repository.dart
         └── presentation/      # Widgets + Riverpod providers
             ├── collection_providers.dart
-            └── collection_home_page.dart
+            ├── collection_home_page.dart
+            └── watch_form_page.dart
 ```
 
 - **domain** — pure Dart: entities and abstract repository interfaces. No
   dependency on Flutter or any data source.
-- **data** — concrete implementations of the domain contracts. The current
-  `InMemoryWatchRepository` is a placeholder that will be replaced by a
-  local-storage implementation in a later milestone.
+- **data** — concrete implementations of the domain contracts. The app is wired
+  to `DriftWatchRepository` (local SQLite); `InMemoryWatchRepository` remains
+  for tests and previews.
 - **presentation** — Riverpod providers and Flutter widgets. Providers are the
   seam between the UI and the data layer, so implementations can be swapped or
   overridden (e.g. in tests) without touching widgets.
