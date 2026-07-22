@@ -1,13 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
-import 'package:watch_collection/features/collection/presentation/photo_gallery_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_form_page.dart';
+import 'package:watch_collection/features/collection/presentation/watch_photo_grid.dart';
 
 /// Watch Detail screen (issue #6).
 ///
@@ -47,7 +45,8 @@ class WatchDetailPage extends ConsumerWidget {
         if (watch == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text('This watch is no longer available.')),
+            body:
+                const Center(child: Text('This watch is no longer available.')),
           );
         }
         return _DetailScaffold(watch: watch);
@@ -99,22 +98,19 @@ class _DetailScaffold extends ConsumerWidget {
             const _PlaceholderTab(
               icon: Icons.event_available_outlined,
               title: 'Wear history',
-              message:
-                  'A calendar and stats of when you wore this watch will '
+              message: 'A calendar and stats of when you wore this watch will '
                   'appear here.',
             ),
             const _PlaceholderTab(
               icon: Icons.timelapse_outlined,
               title: 'Accuracy',
-              message:
-                  'Track this watch’s daily rate and timekeeping accuracy '
+              message: 'Track this watch’s daily rate and timekeeping accuracy '
                   'here.',
             ),
             const _PlaceholderTab(
               icon: Icons.build_outlined,
               title: 'Service',
-              message:
-                  'Log services and maintenance reminders for this watch '
+              message: 'Log services and maintenance reminders for this watch '
                   'here.',
             ),
           ],
@@ -140,7 +136,7 @@ class _OverviewTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
-        _PhotoStrip(photos: photos),
+        WatchPhotoGrid(imagePaths: [for (final p in photos) p.filePath]),
         const SizedBox(height: 16),
         _SpecSection(
           title: 'Identification',
@@ -206,71 +202,6 @@ class _OverviewTab extends StatelessWidget {
   static String _trimNum(double value) {
     if (value == value.roundToDouble()) return value.toInt().toString();
     return value.toString();
-  }
-}
-
-/// Horizontal, tappable strip of the watch's photos. Tapping opens the
-/// full-screen gallery viewer. Shows a placeholder when there are no photos.
-class _PhotoStrip extends StatelessWidget {
-  const _PhotoStrip({required this.photos});
-
-  final List<WatchPhoto> photos;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    if (photos.isEmpty) {
-      return Container(
-        height: 200,
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(
-          Icons.watch_outlined,
-          size: 64,
-          color: scheme.onSurfaceVariant,
-        ),
-      );
-    }
-
-    final paths = [for (final p in photos) p.filePath];
-    return SizedBox(
-      height: 220,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: photos.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () => Navigator.of(context).push<void>(
-              MaterialPageRoute<void>(
-                builder: (_) => PhotoGalleryPage(
-                  imagePaths: paths,
-                  initialIndex: index,
-                ),
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.file(
-                File(paths[index]),
-                width: 220,
-                fit: BoxFit.cover,
-                errorBuilder: (context, _, __) => Container(
-                  width: 220,
-                  color: scheme.surfaceContainerHighest,
-                  child: Icon(
-                    Icons.broken_image_outlined,
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
   }
 }
 
