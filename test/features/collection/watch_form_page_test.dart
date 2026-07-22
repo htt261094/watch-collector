@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:watch_collection/features/collection/data/in_memory_watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/data/in_memory_watch_repository.dart';
 import 'package:watch_collection/features/collection/domain/movement_type.dart';
 import 'package:watch_collection/features/collection/domain/watch.dart';
@@ -12,6 +13,8 @@ Widget _wrap(Widget child) {
   return ProviderScope(
     overrides: [
       watchRepositoryProvider.overrideWithValue(InMemoryWatchRepository()),
+      watchPhotoRepositoryProvider
+          .overrideWithValue(InMemoryWatchPhotoRepository()),
     ],
     child: MaterialApp(home: child),
   );
@@ -35,10 +38,14 @@ void main() {
 
     await tester.enterText(find.widgetWithText(TextFormField, 'Brand *'), 'X');
     await tester.enterText(find.widgetWithText(TextFormField, 'Model *'), 'Y');
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Diameter (mm)'),
-      '-5',
+    // The Case section is below the fold; scroll it into view before typing.
+    final diameter = find.widgetWithText(TextFormField, 'Diameter (mm)');
+    await tester.scrollUntilVisible(
+      diameter,
+      100,
+      scrollable: find.byType(Scrollable).first,
     );
+    await tester.enterText(diameter, '-5');
 
     await tester.tap(find.widgetWithText(TextButton, 'Save'));
     await tester.pump();
@@ -61,7 +68,13 @@ void main() {
     expect(find.text('Edit watch'), findsOneWidget);
     expect(find.text('Omega'), findsOneWidget);
     expect(find.text('Speedmaster'), findsOneWidget);
-    // The predefined "Chronograph" chip is shown selected.
-    expect(find.widgetWithText(FilterChip, 'Chronograph'), findsOneWidget);
+    // The predefined "Chronograph" chip is shown selected (below the fold).
+    final chip = find.widgetWithText(FilterChip, 'Chronograph');
+    await tester.scrollUntilVisible(
+      chip,
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(chip, findsOneWidget);
   });
 }
