@@ -4,18 +4,26 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:watch_collection/features/collection/data/in_memory_watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/data/in_memory_watch_repository.dart';
+import 'package:watch_collection/features/collection/data/in_memory_wear_log_repository.dart';
 import 'package:watch_collection/features/collection/domain/movement_type.dart';
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_repository.dart';
+import 'package:watch_collection/features/collection/domain/wear_log_repository.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
 import 'package:watch_collection/features/collection/presentation/watch_detail_page.dart';
 
-Widget _wrap(Widget child, {required WatchRepository watchRepository}) {
+Widget _wrap(
+  Widget child, {
+  required WatchRepository watchRepository,
+  WearLogRepository? wearLogRepository,
+}) {
   return ProviderScope(
     overrides: [
       watchRepositoryProvider.overrideWithValue(watchRepository),
       watchPhotoRepositoryProvider
           .overrideWithValue(InMemoryWatchPhotoRepository()),
+      wearLogRepositoryProvider
+          .overrideWithValue(wearLogRepository ?? InMemoryWearLogRepository()),
     ],
     child: MaterialApp(home: child),
   );
@@ -90,6 +98,53 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Coming soon'), findsOneWidget);
+  });
+
+  testWidgets('one-tap wear logs today and reflects the worn state',
+      (tester) async {
+    final wearLog = InMemoryWearLogRepository();
+    await tester.pumpWidget(
+      _wrap(
+        const WatchDetailPage(watchId: 'w1'),
+        watchRepository: _SeededRepository(watch),
+        wearLogRepository: wearLog,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Starts unworn: the action offers to wear it today.
+    expect(find.byTooltip('Wear today'), findsOneWidget);
+    expect(find.byTooltip('Worn today'), findsNothing);
+
+    await tester.tap(find.byTooltip('Wear today'));
+    await tester.pumpAndSettle();
+
+    // The tap wrote a wear entry for today and the action now reads as worn.
+    expect(await wearLog.getWatchIdsWornOn(DateTime.now()), {'w1'});
+    expect(find.byTooltip('Worn today'), findsOneWidget);
+    expect(find.text('Wearing Omega Speedmaster today'), findsOneWidget);
+  });
+
+  testWidgets('double-tapping in a day does not create a duplicate log',
+      (tester) async {
+    final wearLog = InMemoryWearLogRepository();
+    await tester.pumpWidget(
+      _wrap(
+        const WatchDetailPage(watchId: 'w1'),
+        watchRepository: _SeededRepository(watch),
+        wearLogRepository: wearLog,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Log, then unmark: state round-trips back to "not worn" with no residue.
+    await tester.tap(find.byTooltip('Wear today'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Worn today'));
+    await tester.pumpAndSettle();
+
+    expect(await wearLog.getWatchIdsWornOn(DateTime.now()), isEmpty);
+    expect(find.byTooltip('Wear today'), findsOneWidget);
   });
 
   testWidgets('handles a missing watch gracefully', (tester) async {
