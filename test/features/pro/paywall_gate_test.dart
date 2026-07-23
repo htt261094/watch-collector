@@ -13,6 +13,8 @@ import 'package:watch_collection/features/pro/data/in_memory_pro_repository.dart
 import 'package:watch_collection/features/pro/domain/pro_repository.dart';
 import 'package:watch_collection/features/pro/presentation/pro_providers.dart';
 
+import 'fake_purchase_service.dart';
+
 /// A repository returning a fixed set of watches, so the gate sees a known
 /// collection size.
 class _FixedRepository extends InMemoryWatchRepository {
@@ -45,6 +47,7 @@ Widget _wrap({required int watchCount, required bool proUnlocked}) {
       proRepositoryProvider.overrideWithValue(
         InMemoryProRepository(proUnlocked: proUnlocked),
       ),
+      purchaseServiceProvider.overrideWithValue(FakePurchaseService()),
     ],
     child: const MaterialApp(home: CollectionHomePage()),
   );
@@ -99,7 +102,8 @@ void main() {
     await tapAdd(tester);
     expect(find.text('Upgrade to Pro'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Unlock Pro'));
+    // The unlock button carries the store-formatted price.
+    await tester.tap(find.byType(FilledButton));
     await tester.pumpAndSettle();
 
     // Paywall popped, Add form opened.

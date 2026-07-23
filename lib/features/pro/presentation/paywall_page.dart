@@ -3,17 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:watch_collection/features/pro/domain/pro_repository.dart';
 import 'package:watch_collection/features/pro/presentation/pro_providers.dart';
+import 'package:watch_collection/features/pro/presentation/purchase_controller.dart';
 
-/// Pro upgrade / paywall screen (issue #10).
+/// Pro upgrade / paywall screen (issues #10, #11).
 ///
 /// Shown when a free user hits the [freeWatchLimit] and tries to add another
 /// watch, and reachable on demand for an overview of Pro. It sells the upgrade
-/// and offers an unlock action.
+/// and drives the Google Play Billing flow via [purchaseControllerProvider]:
+/// "Unlock Pro" starts the one-time non-consumable purchase, and "Restore
+/// purchase" recovers an unlock made on another device.
 ///
-/// Billing (real in-app purchase / restore) is out of scope for the MVP gate:
-/// "Unlock Pro" flips the persisted `pro_unlocked` flag directly so the rest of
-/// the app can be built and tested against a real entitlement. Wiring a store
-/// SDK later only needs to replace [_unlock]'s body.
+/// A successful purchase or restore persists the `pro_unlocked` entitlement (in
+/// the controller) and pops with `true`, so the opener can retry the gated
+/// action.
 class PaywallPage extends ConsumerStatefulWidget {
   const PaywallPage({super.key});
 
@@ -22,8 +24,6 @@ class PaywallPage extends ConsumerStatefulWidget {
 }
 
 class _PaywallPageState extends ConsumerState<PaywallPage> {
-  bool _unlocking = false;
-
   static const _benefits = <(IconData, String, String)>[
     (
       Icons.all_inclusive,
@@ -47,10 +47,31 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
+    // React to purchase outcomes: dismiss on unlock, surface errors/cancels.
+    ref.listen<PurchaseState>(purchaseControllerProvider, (previous, next) {
+      switch (next.phase) {
+        case PurchasePhase.unlocked:
+          if (!mounted) return;
+          Navigator.of(context).pop(true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pro unlocked — enjoy your collection!'),
+            ),
+          );
+        case PurchasePhase.error:
+          _showSnack(next.message ?? 'The purchase could not be completed.');
+        case PurchasePhase.canceled:
+          _showSnack('Purchase canceled.');
+        case PurchasePhase.idle:
+        case PurchasePhase.pending:
+          break;
+      }
+    });
+
+    final state = ref.watch(purchaseControllerProvider);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Watch Collection Pro'),
-      ),
+      appBar: AppBar(title: const Text('Watch Collection Pro')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -66,7 +87,7 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
             const SizedBox(height: 8),
             Text(
               'The free plan holds up to $freeWatchLimit watches. '
-              'Unlock Pro for an unlimited collection.',
+              'Unlock Pro once for an unlimited collection.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: scheme.onSurfaceVariant),
@@ -74,47 +95,78 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
             const SizedBox(height: 32),
             for (final (icon, title, subtitle) in _benefits)
               _BenefitTile(icon: icon, title: title, subtitle: subtitle),
+            if (!state.loadingProduct && !state.storeAvailable) ...[
+              const SizedBox(height: 8),
+              Text(
+                'The store is unavailable right now. Check your connection and '
+                'Google Play sign-in, then try again.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(color: scheme.error),
+              ),
+            ],
           ],
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-        child: FilledButton.icon(
-          onPressed: _unlocking ? null : _unlock,
-          icon: _unlocking
-              ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.lock_open),
-          label: Text(_unlocking ? 'Unlocking…' : 'Unlock Pro'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(52),
+      bottomNavigationBar: _Actions(state: state),
+    );
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+/// The unlock + restore actions pinned to the bottom of the paywall.
+class _Actions extends ConsumerWidget {
+  const _Actions({required this.state});
+
+  final PurchaseState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.read(purchaseControllerProvider.notifier);
+    final canBuy =
+        state.storeAvailable && state.product != null && !state.busy;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FilledButton.icon(
+            onPressed: canBuy ? controller.buy : null,
+            icon: state.busy
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.lock_open),
+            label: Text(_buyLabel()),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
           ),
-        ),
+          TextButton(
+            onPressed: state.storeAvailable && !state.busy
+                ? controller.restore
+                : null,
+            child: const Text('Restore purchase'),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _unlock() async {
-    setState(() => _unlocking = true);
-    try {
-      await ref.read(proRepositoryProvider).setProUnlocked(true);
-      ref.invalidate(proUnlockedProvider);
-      if (!mounted) return;
-      // Signal the opener that Pro was unlocked so it can retry the gated action.
-      Navigator.of(context).pop(true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pro unlocked — enjoy your collection!')),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _unlocking = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not unlock Pro: $error')),
-      );
-    }
+  String _buyLabel() {
+    if (state.busy) return 'Working…';
+    if (state.loadingProduct) return 'Loading…';
+    final product = state.product;
+    if (product == null) return 'Unlock Pro';
+    return 'Unlock Pro · ${product.price}';
   }
 }
 

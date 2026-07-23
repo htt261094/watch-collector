@@ -27,6 +27,9 @@ dependencies:
   # Charts: donut/pie visualisations for the Stats screen distributions
   fl_chart: ^0.69.0
 
+  # In-app purchases: Google Play Billing for the one-time "Pro unlock"
+  in_app_purchase: ^3.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
