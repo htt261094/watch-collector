@@ -64,6 +64,11 @@ class _DetailScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final photos = ref.watch(watchPhotosProvider(watch.id)).valueOrNull ??
         const <WatchPhoto>[];
+    // The worn-today set loads independently; treat a loading/error state as
+    // "not worn yet" so the screen still renders.
+    final wornToday =
+        ref.watch(watchesWornTodayProvider).valueOrNull ?? const <String>{};
+    final isWornToday = wornToday.contains(watch.id);
 
     return DefaultTabController(
       length: 4,
@@ -71,6 +76,13 @@ class _DetailScaffold extends ConsumerWidget {
         appBar: AppBar(
           title: Text('${watch.brand} ${watch.model}'),
           actions: [
+            IconButton(
+              icon: Icon(
+                isWornToday ? Icons.check_circle : Icons.watch_outlined,
+              ),
+              tooltip: isWornToday ? 'Worn today' : 'Wear today',
+              onPressed: () => _toggleWorn(context, ref, isWornToday),
+            ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               tooltip: 'Edit',
@@ -117,6 +129,37 @@ class _DetailScaffold extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// One-tap wear logging: records (or clears) today's wear for this watch.
+  /// The repository keeps the entry idempotent, so repeated taps in a day never
+  /// create duplicate logs.
+  Future<void> _toggleWorn(
+    BuildContext context,
+    WidgetRef ref,
+    bool currentlyWorn,
+  ) async {
+    final repository = ref.read(wearLogRepositoryProvider);
+    final today = DateTime.now();
+    if (currentlyWorn) {
+      await repository.removeWear(watch.id, today);
+    } else {
+      await repository.logWear(watch.id, today);
+    }
+    ref.invalidate(watchesWornTodayProvider);
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            currentlyWorn
+                ? 'Unmarked ${watch.brand} ${watch.model} as worn today'
+                : 'Wearing ${watch.brand} ${watch.model} today',
+          ),
+        ),
+      );
   }
 }
 
