@@ -6,6 +6,8 @@ import 'package:watch_collection/features/collection/domain/watch_photo.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
 import 'package:watch_collection/features/collection/presentation/watch_form_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_photo_grid.dart';
+import 'package:watch_collection/features/collection/presentation/wear_history_actions.dart';
+import 'package:watch_collection/features/collection/presentation/wear_history_tab.dart';
 
 /// Watch Detail screen (issue #6).
 ///
@@ -107,12 +109,7 @@ class _DetailScaffold extends ConsumerWidget {
         body: TabBarView(
           children: [
             _OverviewTab(watch: watch, photos: photos),
-            const _PlaceholderTab(
-              icon: Icons.event_available_outlined,
-              title: 'Wear history',
-              message: 'A calendar and stats of when you wore this watch will '
-                  'appear here.',
-            ),
+            WearHistoryTab(watchId: watch.id),
             const _PlaceholderTab(
               icon: Icons.timelapse_outlined,
               title: 'Accuracy',
@@ -146,7 +143,7 @@ class _DetailScaffold extends ConsumerWidget {
     } else {
       await repository.logWear(watch.id, today);
     }
-    ref.invalidate(watchesWornTodayProvider);
+    invalidateWearProviders(ref, watchId: watch.id);
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context)

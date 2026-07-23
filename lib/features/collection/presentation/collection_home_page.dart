@@ -7,6 +7,8 @@ import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
 import 'package:watch_collection/features/collection/presentation/watch_detail_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_form_page.dart';
+import 'package:watch_collection/features/collection/presentation/wear_history_actions.dart';
+import 'package:watch_collection/features/collection/presentation/wear_history_page.dart';
 
 /// Landing screen: the collection as a photo gallery (issue #5).
 ///
@@ -31,6 +33,17 @@ class CollectionHomePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Collection'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: 'Wear history',
+            onPressed: () => Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(
+                builder: (_) => const WearHistoryPage(),
+              ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context),
@@ -91,7 +104,7 @@ class CollectionHomePage extends ConsumerWidget {
     } else {
       await repository.logWear(watch.id, today);
     }
-    ref.invalidate(watchesWornTodayProvider);
+    invalidateWearProviders(ref, watchId: watch.id);
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context)
@@ -140,7 +153,7 @@ class CollectionHomePage extends ConsumerWidget {
     await ref.read(watchPhotoRepositoryProvider).deletePhotosForWatch(watch.id);
     ref.invalidate(watchListProvider);
     ref.invalidate(watchThumbnailsProvider);
-    ref.invalidate(watchesWornTodayProvider);
+    invalidateWearProviders(ref, watchId: watch.id);
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
