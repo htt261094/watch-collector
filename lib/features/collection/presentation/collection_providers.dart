@@ -1,11 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:watch_collection/core/database/app_database.dart';
+import 'package:watch_collection/features/collection/data/drift_custom_field_repository.dart';
 import 'package:watch_collection/features/collection/data/drift_watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/data/drift_watch_repository.dart';
 import 'package:watch_collection/features/collection/data/drift_wear_log_repository.dart';
 import 'package:watch_collection/features/collection/data/photo_storage.dart';
 import 'package:watch_collection/features/collection/domain/collection_stats.dart';
+import 'package:watch_collection/features/collection/domain/custom_field.dart';
+import 'package:watch_collection/features/collection/domain/custom_field_repository.dart';
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo_repository.dart';
@@ -101,6 +104,18 @@ final allWearHistoryProvider = FutureProvider<List<WearEntry>>((ref) async {
 final watchLabelsProvider = FutureProvider<Map<String, String>>((ref) async {
   final watches = await ref.watch(watchListProvider.future);
   return {for (final w in watches) w.id: '${w.brand} ${w.model}'};
+});
+
+/// Repository for per-watch custom fields (issue #15), backed by local storage.
+final customFieldRepositoryProvider = Provider<CustomFieldRepository>((ref) {
+  return DriftCustomFieldRepository(ref.watch(appDatabaseProvider));
+});
+
+/// The custom fields for a single watch, in display order. Invalidated whenever
+/// a field is added, edited, or removed.
+final customFieldsForWatchProvider =
+    FutureProvider.family<List<CustomField>, String>((ref, watchId) async {
+  return ref.watch(customFieldRepositoryProvider).getFieldsForWatch(watchId);
 });
 
 /// Aggregate collection statistics (issue #9): cost-per-wear, most/least worn,

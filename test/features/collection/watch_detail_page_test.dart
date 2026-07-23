@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:watch_collection/features/collection/data/in_memory_custom_field_repository.dart';
 import 'package:watch_collection/features/collection/data/in_memory_watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/data/in_memory_watch_repository.dart';
 import 'package:watch_collection/features/collection/data/in_memory_wear_log_repository.dart';
@@ -24,6 +25,8 @@ Widget _wrap(
           .overrideWithValue(InMemoryWatchPhotoRepository()),
       wearLogRepositoryProvider
           .overrideWithValue(wearLogRepository ?? InMemoryWearLogRepository()),
+      customFieldRepositoryProvider
+          .overrideWithValue(InMemoryCustomFieldRepository()),
     ],
     child: MaterialApp(home: child),
   );

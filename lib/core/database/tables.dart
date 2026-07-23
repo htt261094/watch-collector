@@ -153,6 +153,12 @@ class CustomFields extends Table {
 
   TextColumn get fieldKey => text()();
   TextColumn get fieldValue => text().nullable()();
+
+  /// One of `text` / `number` / `date` — how [fieldValue] is entered and
+  /// displayed (validated in the app layer). Defaults to `text` so rows created
+  /// before this column existed read back as free text.
+  TextColumn get fieldType =>
+      text().withDefault(const Constant('text'))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 
   @override

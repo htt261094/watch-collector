@@ -36,6 +36,11 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
       'Cost-per-wear, wear history, and distribution charts.',
     ),
     (
+      Icons.tune,
+      'Custom fields',
+      'Add your own fields to any watch — strap, insurance value, anything.',
+    ),
+    (
       Icons.favorite_outline,
       'Support development',
       'A one-time unlock that keeps the app ad-free and offline.',
