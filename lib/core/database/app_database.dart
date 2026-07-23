@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:watch_collection/core/database/connection.dart' as conn;
+import 'package:watch_collection/core/database/daos/custom_field_dao.dart';
 import 'package:watch_collection/core/database/daos/watch_dao.dart';
 import 'package:watch_collection/core/database/daos/watch_photo_dao.dart';
 import 'package:watch_collection/core/database/daos/wear_log_dao.dart';
@@ -23,7 +24,7 @@ part 'app_database.g.dart';
     ServiceRecords,
     Settings,
   ],
-  daos: [WatchDao, WatchPhotoDao, WearLogDao],
+  daos: [WatchDao, WatchPhotoDao, WearLogDao, CustomFieldDao],
 )
 class AppDatabase extends _$AppDatabase {
   /// Opens the on-device database (production use).
@@ -34,13 +35,20 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       onCreate: (m) async {
         await m.createAll();
+      },
+      onUpgrade: (m, from, to) async {
+        // v2 (M5): custom fields gained a `fieldType` column describing how the
+        // stored value is entered/displayed. Existing rows default to `text`.
+        if (from < 2) {
+          await m.addColumn(customFields, customFields.fieldType);
+        }
       },
       beforeOpen: (details) async {
         // SQLite disables foreign keys per-connection by default; the cascade

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
+import 'package:watch_collection/features/collection/presentation/custom_fields_section.dart';
 import 'package:watch_collection/features/collection/presentation/watch_form_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_photo_grid.dart';
 import 'package:watch_collection/features/collection/presentation/wear_history_actions.dart';
@@ -197,6 +198,7 @@ class _OverviewTab extends StatelessWidget {
         _SpecSection(title: 'Purchase', rows: purchase),
         if (watch.notes != null && watch.notes!.trim().isNotEmpty)
           _NotesSection(notes: watch.notes!),
+        CustomFieldsSection(watchId: watch.id),
       ],
     );
   }
