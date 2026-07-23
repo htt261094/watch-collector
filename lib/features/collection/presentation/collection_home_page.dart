@@ -10,6 +10,9 @@ import 'package:watch_collection/features/collection/presentation/watch_detail_p
 import 'package:watch_collection/features/collection/presentation/watch_form_page.dart';
 import 'package:watch_collection/features/collection/presentation/wear_history_actions.dart';
 import 'package:watch_collection/features/collection/presentation/wear_history_page.dart';
+import 'package:watch_collection/features/pro/domain/pro_repository.dart';
+import 'package:watch_collection/features/pro/presentation/paywall_page.dart';
+import 'package:watch_collection/features/pro/presentation/pro_providers.dart';
 
 /// Landing screen: the collection as a photo gallery (issue #5).
 ///
@@ -56,7 +59,7 @@ class CollectionHomePage extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(context),
+        onPressed: () => _onAddPressed(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('Add watch'),
       ),
@@ -85,6 +88,29 @@ class CollectionHomePage extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  /// Handles the "Add watch" FAB. Free users are capped at [freeWatchLimit]
+  /// watches; hitting the cap opens the paywall instead of the form. If the
+  /// user unlocks Pro there, the Add form opens straight away.
+  Future<void> _onAddPressed(BuildContext context, WidgetRef ref) async {
+    final watchCount = ref.read(watchListProvider).valueOrNull?.length ?? 0;
+    final proUnlocked = await ref.read(proRepositoryProvider).isProUnlocked();
+
+    if (canAddWatch(watchCount: watchCount, proUnlocked: proUnlocked)) {
+      if (!context.mounted) return;
+      await _openForm(context);
+      return;
+    }
+
+    if (!context.mounted) return;
+    final unlocked = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => const PaywallPage()),
+    );
+    // Unlocking Pro from the paywall clears the cap — continue to the form.
+    if (unlocked == true && context.mounted) {
+      await _openForm(context);
+    }
   }
 
   Future<void> _openForm(BuildContext context, {Watch? watch}) {
