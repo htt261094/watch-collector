@@ -30,6 +30,12 @@ dependencies:
   # In-app purchases: Google Play Billing for the one-time "Pro unlock"
   in_app_purchase: ^3.2.0
 
+  # Local notifications: service & warranty reminders (M6). timezone +
+  # flutter_timezone resolve the device zone for exact scheduled instants.
+  flutter_local_notifications: ^17.2.3
+  timezone: ^0.9.4
+  flutter_timezone: ^1.0.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

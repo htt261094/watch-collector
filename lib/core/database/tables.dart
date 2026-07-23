@@ -165,21 +165,33 @@ class CustomFields extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// Service / maintenance history for a watch (M6 — service & rotation).
+/// Service & warranty reminders for a watch (M6 — issue #16).
+///
+/// Each row is a single reminder: a [recordType] (`service` or `warranty`), the
+/// [dueDate] it falls due, an optional [note], and an optional warranty-card
+/// photo. A local notification is scheduled off [dueDate] in the app layer.
 @DataClassName('ServiceRecordRow')
 class ServiceRecords extends Table {
   TextColumn get id => text()();
   TextColumn get watchId =>
       text().references(Watches, #id, onDelete: KeyAction.cascade)();
 
-  DateTimeColumn get serviceDate => dateTime()();
-  TextColumn get serviceType => text().nullable()();
-  TextColumn get provider => text().nullable()();
-  RealColumn get cost => real().nullable()();
-  DateTimeColumn get nextServiceDate => dateTime().nullable()();
+  /// One of `service` / `warranty` (validated in the app layer).
+  TextColumn get recordType => text()();
+
+  /// The day this service is due / the warranty expires. The reminder
+  /// notification is scheduled from this date.
+  DateTimeColumn get dueDate => dateTime()();
+
   TextColumn get note => text().nullable()();
 
+  /// Absolute path to the warranty-card photo inside app storage, or null when
+  /// no card image is attached. Mirrors [WatchPhotos.filePath] — the binary is
+  /// never stored in the database. (The issue's `card_photo_id`.)
+  TextColumn get cardPhotoPath => text().nullable()();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

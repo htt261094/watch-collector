@@ -5,6 +5,7 @@ import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
 import 'package:watch_collection/features/collection/presentation/custom_fields_section.dart';
+import 'package:watch_collection/features/collection/presentation/service_records_tab.dart';
 import 'package:watch_collection/features/collection/presentation/watch_form_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_photo_grid.dart';
 import 'package:watch_collection/features/collection/presentation/wear_history_actions.dart';
@@ -17,8 +18,8 @@ import 'package:watch_collection/features/collection/presentation/wear_history_t
 ///
 /// * **Overview** — every field captured on the Add/Edit form, grouped by
 ///   section, plus the photo gallery.
-/// * **Wear history**, **Accuracy**, **Service** — placeholders for features
-///   wired up in later milestones.
+/// * **Wear history** (issue #8) and **Service** (issue #16) — full features.
+/// * **Accuracy** — placeholder for a feature wired up in a later milestone.
 ///
 /// The watch is re-read from [watchByIdProvider] so edits made via the form
 /// (opened from the AppBar) are reflected on return without a manual refresh.
@@ -117,11 +118,9 @@ class _DetailScaffold extends ConsumerWidget {
               message: 'Track this watch’s daily rate and timekeeping accuracy '
                   'here.',
             ),
-            const _PlaceholderTab(
-              icon: Icons.build_outlined,
-              title: 'Service',
-              message: 'Log services and maintenance reminders for this watch '
-                  'here.',
+            ServiceRecordsTab(
+              watchId: watch.id,
+              watchLabel: '${watch.brand} ${watch.model}',
             ),
           ],
         ),
