@@ -2,13 +2,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:watch_collection/core/database/app_database.dart';
 import 'package:watch_collection/features/collection/data/drift_custom_field_repository.dart';
+import 'package:watch_collection/features/collection/data/drift_service_record_repository.dart';
 import 'package:watch_collection/features/collection/data/drift_watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/data/drift_watch_repository.dart';
 import 'package:watch_collection/features/collection/data/drift_wear_log_repository.dart';
+import 'package:watch_collection/features/collection/data/flutter_local_notifications_scheduler.dart';
 import 'package:watch_collection/features/collection/data/photo_storage.dart';
 import 'package:watch_collection/features/collection/domain/collection_stats.dart';
 import 'package:watch_collection/features/collection/domain/custom_field.dart';
 import 'package:watch_collection/features/collection/domain/custom_field_repository.dart';
+import 'package:watch_collection/features/collection/domain/service_record.dart';
+import 'package:watch_collection/features/collection/domain/service_record_repository.dart';
+import 'package:watch_collection/features/collection/domain/service_reminder_scheduler.dart';
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo_repository.dart';
@@ -116,6 +121,30 @@ final customFieldRepositoryProvider = Provider<CustomFieldRepository>((ref) {
 final customFieldsForWatchProvider =
     FutureProvider.family<List<CustomField>, String>((ref, watchId) async {
   return ref.watch(customFieldRepositoryProvider).getFieldsForWatch(watchId);
+});
+
+/// Repository for per-watch service & warranty reminders (issue #16), backed by
+/// local storage. Warranty-card photos share the watch's photo storage folder.
+final serviceRecordRepositoryProvider =
+    Provider<ServiceRecordRepository>((ref) {
+  return DriftServiceRecordRepository(
+    ref.watch(appDatabaseProvider),
+    ref.watch(photoStorageProvider),
+  );
+});
+
+/// Schedules the local notifications behind service & warranty reminders
+/// (issue #16). Overridden in tests with a fake that records scheduling calls.
+final serviceReminderSchedulerProvider =
+    Provider<ServiceReminderScheduler>((ref) {
+  return FlutterLocalNotificationsScheduler();
+});
+
+/// The service & warranty records for a single watch, soonest due first.
+/// Invalidated whenever a record is added, edited, or removed.
+final serviceRecordsForWatchProvider =
+    FutureProvider.family<List<ServiceRecord>, String>((ref, watchId) async {
+  return ref.watch(serviceRecordRepositoryProvider).getRecordsForWatch(watchId);
 });
 
 /// Aggregate collection statistics (issue #9): cost-per-wear, most/least worn,

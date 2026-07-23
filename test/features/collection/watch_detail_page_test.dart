@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:watch_collection/features/collection/data/in_memory_custom_field_repository.dart';
+import 'package:watch_collection/features/collection/data/in_memory_service_record_repository.dart';
 import 'package:watch_collection/features/collection/data/in_memory_watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/data/in_memory_watch_repository.dart';
 import 'package:watch_collection/features/collection/data/in_memory_wear_log_repository.dart';
@@ -12,6 +13,8 @@ import 'package:watch_collection/features/collection/domain/watch_repository.dar
 import 'package:watch_collection/features/collection/domain/wear_log_repository.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
 import 'package:watch_collection/features/collection/presentation/watch_detail_page.dart';
+
+import 'fake_service_reminder_scheduler.dart';
 
 Widget _wrap(
   Widget child, {
@@ -27,6 +30,10 @@ Widget _wrap(
           .overrideWithValue(wearLogRepository ?? InMemoryWearLogRepository()),
       customFieldRepositoryProvider
           .overrideWithValue(InMemoryCustomFieldRepository()),
+      serviceRecordRepositoryProvider
+          .overrideWithValue(InMemoryServiceRecordRepository()),
+      serviceReminderSchedulerProvider
+          .overrideWithValue(FakeServiceReminderScheduler()),
     ],
     child: MaterialApp(home: child),
   );

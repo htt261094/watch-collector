@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:watch_collection/core/database/connection.dart' as conn;
 import 'package:watch_collection/core/database/daos/custom_field_dao.dart';
+import 'package:watch_collection/core/database/daos/service_record_dao.dart';
 import 'package:watch_collection/core/database/daos/watch_dao.dart';
 import 'package:watch_collection/core/database/daos/watch_photo_dao.dart';
 import 'package:watch_collection/core/database/daos/wear_log_dao.dart';
@@ -24,7 +25,13 @@ part 'app_database.g.dart';
     ServiceRecords,
     Settings,
   ],
-  daos: [WatchDao, WatchPhotoDao, WearLogDao, CustomFieldDao],
+  daos: [
+    WatchDao,
+    WatchPhotoDao,
+    WearLogDao,
+    CustomFieldDao,
+    ServiceRecordDao,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   /// Opens the on-device database (production use).
@@ -35,7 +42,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -48,6 +55,14 @@ class AppDatabase extends _$AppDatabase {
         // stored value is entered/displayed. Existing rows default to `text`.
         if (from < 2) {
           await m.addColumn(customFields, customFields.fieldType);
+        }
+        // v3 (M6): the service_records table was reshaped for the service &
+        // warranty reminder feature (issue #16). The previous shape was only
+        // ever scaffolded — never written to by any DAO — so it is safe to drop
+        // and recreate it rather than migrate column-by-column.
+        if (from < 3) {
+          await m.deleteTable(serviceRecords.actualTableName);
+          await m.createTable(serviceRecords);
         }
       },
       beforeOpen: (details) async {
