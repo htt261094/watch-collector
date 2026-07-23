@@ -5,6 +5,7 @@ import 'package:watch_collection/features/collection/data/drift_watch_photo_repo
 import 'package:watch_collection/features/collection/data/drift_watch_repository.dart';
 import 'package:watch_collection/features/collection/data/drift_wear_log_repository.dart';
 import 'package:watch_collection/features/collection/data/photo_storage.dart';
+import 'package:watch_collection/features/collection/domain/collection_stats.dart';
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo_repository.dart';
@@ -100,4 +101,13 @@ final allWearHistoryProvider = FutureProvider<List<WearEntry>>((ref) async {
 final watchLabelsProvider = FutureProvider<Map<String, String>>((ref) async {
   final watches = await ref.watch(watchListProvider.future);
   return {for (final w in watches) w.id: '${w.brand} ${w.model}'};
+});
+
+/// Aggregate collection statistics (issue #9): cost-per-wear, most/least worn,
+/// wears this year, and brand/movement distributions. Derived from the watch
+/// list and the full wear log, so it refreshes whenever either changes.
+final collectionStatsProvider = FutureProvider<CollectionStats>((ref) async {
+  final watches = await ref.watch(watchListProvider.future);
+  final entries = await ref.watch(allWearHistoryProvider.future);
+  return computeCollectionStats(watches, entries);
 });

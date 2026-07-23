@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
+import 'package:watch_collection/features/collection/presentation/stats_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_detail_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_form_page.dart';
 import 'package:watch_collection/features/collection/presentation/wear_history_actions.dart';
@@ -34,6 +35,15 @@ class CollectionHomePage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('My Collection'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.insights_outlined),
+            tooltip: 'Stats',
+            onPressed: () => Navigator.of(context).push<void>(
+              MaterialPageRoute<void>(
+                builder: (_) => const StatsPage(),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.history),
             tooltip: 'Wear history',
@@ -185,8 +195,7 @@ class _Gallery extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wornWatches =
-        watches.where((w) => wornToday.contains(w.id)).toList();
+    final wornWatches = watches.where((w) => wornToday.contains(w.id)).toList();
 
     // Two columns on phones, more on wider screens.
     final width = MediaQuery.sizeOf(context).width;
