@@ -1,5 +1,6 @@
 import 'package:watch_collection/core/database/app_database.dart';
 import 'package:watch_collection/core/util/id_generator.dart';
+import 'package:watch_collection/features/collection/domain/wear_entry.dart';
 import 'package:watch_collection/features/collection/domain/wear_log_repository.dart';
 
 /// Local-storage backed [WearLogRepository], reading and writing through the
@@ -43,8 +44,59 @@ class DriftWearLogRepository implements WearLogRepository {
         .deleteLogsForWatchOnDay(watchId, start, _nextDay(start));
   }
 
+  @override
+  Future<List<WearEntry>> getEntriesForWatch(String watchId) async {
+    final rows = await _db.wearLogDao.getLogsForWatch(watchId);
+    return rows.map(_toEntry).toList();
+  }
+
+  @override
+  Future<List<WearEntry>> getAllEntries() async {
+    final rows = await _db.wearLogDao.getAllLogs();
+    return rows.map(_toEntry).toList();
+  }
+
+  @override
+  Future<void> updateEntry(
+    String id, {
+    required DateTime wornOn,
+    String? note,
+  }) async {
+    final start = _dayStart(wornOn);
+    final existing = await _db.wearLogDao.getById(id);
+    if (existing == null) return;
+
+    // Keep one entry per watch per day even when moving a record onto a day
+    // that already has one for the same watch.
+    await _db.wearLogDao.deleteLogsForWatchOnDayExcept(
+      existing.watchId,
+      start,
+      _nextDay(start),
+      id,
+    );
+    final trimmed = note?.trim();
+    await _db.wearLogDao.updateLog(
+      id,
+      start,
+      (trimmed == null || trimmed.isEmpty) ? null : trimmed,
+    );
+  }
+
+  @override
+  Future<void> deleteEntry(String id) async {
+    await _db.wearLogDao.deleteById(id);
+  }
+
+  static WearEntry _toEntry(WearLogRow row) => WearEntry(
+        id: row.id,
+        watchId: row.watchId,
+        wornOn: row.wornOn,
+        note: row.note,
+      );
+
   /// Midnight (local) of the given day.
-  static DateTime _dayStart(DateTime day) => DateTime(day.year, day.month, day.day);
+  static DateTime _dayStart(DateTime day) =>
+      DateTime(day.year, day.month, day.day);
 
   /// Midnight (local) of the day after [start]. Using [DateTime] arithmetic via
   /// the constructor keeps it correct across DST boundaries.

@@ -77,4 +77,84 @@ void main() {
 
     expect(await repo.getWatchIdsWornOn(today), isEmpty);
   });
+
+  group('wear history (issue #8)', () {
+    test('getEntriesForWatch returns that watch, most recent first', () async {
+      await repo.logWear('w1', DateTime(2026, 7, 20));
+      await repo.logWear('w1', DateTime(2026, 7, 23));
+      await repo.logWear('w1', DateTime(2026, 7, 21));
+      await repo.logWear('w2', DateTime(2026, 7, 22));
+
+      final entries = await repo.getEntriesForWatch('w1');
+      expect(entries, hasLength(3));
+      expect(entries.every((e) => e.watchId == 'w1'), isTrue);
+      expect(
+        entries.map((e) => e.wornOn),
+        [DateTime(2026, 7, 23), DateTime(2026, 7, 21), DateTime(2026, 7, 20)],
+      );
+    });
+
+    test('getAllEntries spans every watch, most recent first', () async {
+      await repo.logWear('w1', DateTime(2026, 7, 20));
+      await repo.logWear('w2', DateTime(2026, 7, 23));
+
+      final entries = await repo.getAllEntries();
+      expect(entries.map((e) => e.watchId), ['w2', 'w1']);
+    });
+
+    test('updateEntry moves the day and sets the note', () async {
+      await repo.logWear('w1', DateTime(2026, 7, 20));
+      final entry = (await repo.getEntriesForWatch('w1')).single;
+
+      await repo.updateEntry(
+        entry.id,
+        wornOn: DateTime(2026, 7, 25, 10),
+        note: '  desk day  ',
+      );
+
+      final updated = (await repo.getEntriesForWatch('w1')).single;
+      expect(updated.wornOn, DateTime(2026, 7, 25));
+      expect(updated.note, 'desk day'); // trimmed
+    });
+
+    test('updateEntry clears the note when given blank text', () async {
+      await repo.logWear('w1', DateTime(2026, 7, 20));
+      final entry = (await repo.getEntriesForWatch('w1')).single;
+      await repo.updateEntry(entry.id, wornOn: entry.wornOn, note: 'x');
+
+      await repo.updateEntry(entry.id, wornOn: entry.wornOn, note: '   ');
+
+      expect((await repo.getEntriesForWatch('w1')).single.note, isNull);
+    });
+
+    test('updateEntry keeps one entry per watch per day on collision',
+        () async {
+      await repo.logWear('w1', DateTime(2026, 7, 20));
+      await repo.logWear('w1', DateTime(2026, 7, 21));
+      final entries = await repo.getEntriesForWatch('w1');
+      final toMove = entries.firstWhere(
+        (e) => e.wornOn == DateTime(2026, 7, 20),
+      );
+
+      // Move the 20th onto the 21st, which already has an entry.
+      await repo.updateEntry(toMove.id, wornOn: DateTime(2026, 7, 21));
+
+      final after = await repo.getEntriesForWatch('w1');
+      expect(after, hasLength(1));
+      expect(after.single.wornOn, DateTime(2026, 7, 21));
+    });
+
+    test('deleteEntry removes just that record', () async {
+      await repo.logWear('w1', DateTime(2026, 7, 20));
+      await repo.logWear('w1', DateTime(2026, 7, 21));
+      final entry =
+          (await repo.getEntriesForWatch('w1')).first; // the 21st
+
+      await repo.deleteEntry(entry.id);
+
+      final after = await repo.getEntriesForWatch('w1');
+      expect(after, hasLength(1));
+      expect(after.single.wornOn, DateTime(2026, 7, 20));
+    });
+  });
 }

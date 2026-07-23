@@ -9,6 +9,7 @@ import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo.dart';
 import 'package:watch_collection/features/collection/domain/watch_photo_repository.dart';
 import 'package:watch_collection/features/collection/domain/watch_repository.dart';
+import 'package:watch_collection/features/collection/domain/wear_entry.dart';
 import 'package:watch_collection/features/collection/domain/wear_log_repository.dart';
 
 /// The app-wide drift database. Disposed with the provider scope so the
@@ -79,4 +80,24 @@ final wearLogRepositoryProvider = Provider<WearLogRepository>((ref) {
 /// session spanning midnight is out of scope for M1.
 final watchesWornTodayProvider = FutureProvider<Set<String>>((ref) async {
   return ref.watch(wearLogRepositoryProvider).getWatchIdsWornOn(DateTime.now());
+});
+
+/// Wear history for a single watch, most recent first. Invalidated whenever a
+/// wear record is added, edited, or removed.
+final wearHistoryForWatchProvider =
+    FutureProvider.family<List<WearEntry>, String>((ref, watchId) async {
+  return ref.watch(wearLogRepositoryProvider).getEntriesForWatch(watchId);
+});
+
+/// Wear history across the whole collection, most recent first. Invalidated
+/// whenever a wear record is added, edited, or removed.
+final allWearHistoryProvider = FutureProvider<List<WearEntry>>((ref) async {
+  return ref.watch(wearLogRepositoryProvider).getAllEntries();
+});
+
+/// Convenience lookup of watch id -> "Brand Model" label, for wear-history
+/// views that list entries across multiple watches.
+final watchLabelsProvider = FutureProvider<Map<String, String>>((ref) async {
+  final watches = await ref.watch(watchListProvider.future);
+  return {for (final w in watches) w.id: '${w.brand} ${w.model}'};
 });
