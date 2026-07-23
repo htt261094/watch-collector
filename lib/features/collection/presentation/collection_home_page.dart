@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:watch_collection/features/collection/domain/watch.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
+import 'package:watch_collection/features/collection/presentation/rotation_suggestion_section.dart';
 import 'package:watch_collection/features/collection/presentation/stats_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_detail_page.dart';
 import 'package:watch_collection/features/collection/presentation/watch_form_page.dart';
@@ -237,6 +238,12 @@ class _Gallery extends StatelessWidget {
               onTap: onOpen,
             ),
           ),
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: RotationSuggestionSection(),
+          ),
+        ),
         SliverPadding(
           // Leave room so the FAB doesn't cover the last row.
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 88),

@@ -41,6 +41,11 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
       'Add your own fields to any watch — strap, insurance value, anything.',
     ),
     (
+      Icons.autorenew,
+      'Smart rotation',
+      'Suggestions for the watches you have been neglecting the longest.',
+    ),
+    (
       Icons.favorite_outline,
       'Support development',
       'A one-time unlock that keeps the app ad-free and offline.',

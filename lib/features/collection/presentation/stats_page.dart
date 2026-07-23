@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:watch_collection/features/collection/domain/collection_stats.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
 import 'package:watch_collection/features/collection/presentation/distribution_chart.dart';
+import 'package:watch_collection/features/collection/presentation/rotation_suggestion_section.dart';
 
 /// Statistics screen (issue #9).
 ///
@@ -48,6 +49,8 @@ class _StatsBody extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
         _OverviewTiles(stats: stats, year: year),
+        const SizedBox(height: 24),
+        const RotationSuggestionSection(),
         const SizedBox(height: 24),
         if (stats.mostWorn != null) ...[
           const _SectionTitle('Wear extremes'),
