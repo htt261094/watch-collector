@@ -24,6 +24,9 @@ dependencies:
   path_provider: ^2.1.4
   path: ^1.9.0
 
+  # Charts: donut/pie visualisations for the Stats screen distributions
+  fl_chart: ^0.69.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

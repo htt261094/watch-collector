@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:watch_collection/features/collection/domain/collection_stats.dart';
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
+import 'package:watch_collection/features/collection/presentation/distribution_chart.dart';
 
 /// Statistics screen (issue #9).
 ///
@@ -69,10 +70,10 @@ class _StatsBody extends StatelessWidget {
         _CostPerWearList(perWatch: stats.perWatch),
         const SizedBox(height: 24),
         const _SectionTitle('By brand'),
-        _Distribution(items: stats.byBrand),
+        DistributionChart(items: stats.byBrand),
         const SizedBox(height: 24),
         const _SectionTitle('By movement'),
-        _Distribution(items: stats.byMovement),
+        DistributionChart(items: stats.byMovement),
       ],
     );
   }
@@ -262,66 +263,6 @@ class _CostPerWearRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// A simple horizontal bar chart for a category distribution.
-class _Distribution extends StatelessWidget {
-  const _Distribution({required this.items});
-
-  final List<CategoryCount> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final max = items.fold<int>(0, (m, c) => c.count > m ? c.count : m);
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        child: Column(
-          children: [
-            for (final item in items)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ),
-                        Text(
-                          '${item.count}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: max == 0 ? 0 : item.count / max,
-                        minHeight: 8,
-                        backgroundColor:
-                            theme.colorScheme.surfaceContainerHighest,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
       ),
     );
   }
