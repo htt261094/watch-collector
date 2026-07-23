@@ -34,7 +34,7 @@ dependencies:
   # flutter_timezone resolve the device zone for exact scheduled instants.
   flutter_local_notifications: ^17.2.3
   timezone: ^0.9.4
-  flutter_timezone: ^1.0.8
+  flutter_timezone: ^3.0.1
 
 dev_dependencies:
   flutter_test:

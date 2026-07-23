@@ -11,6 +11,7 @@ import 'package:watch_collection/features/collection/data/photo_storage.dart';
 import 'package:watch_collection/features/collection/domain/collection_stats.dart';
 import 'package:watch_collection/features/collection/domain/custom_field.dart';
 import 'package:watch_collection/features/collection/domain/custom_field_repository.dart';
+import 'package:watch_collection/features/collection/domain/rotation_suggestion.dart';
 import 'package:watch_collection/features/collection/domain/service_record.dart';
 import 'package:watch_collection/features/collection/domain/service_record_repository.dart';
 import 'package:watch_collection/features/collection/domain/service_reminder_scheduler.dart';
@@ -154,4 +155,14 @@ final collectionStatsProvider = FutureProvider<CollectionStats>((ref) async {
   final watches = await ref.watch(watchListProvider.future);
   final entries = await ref.watch(allWearHistoryProvider.future);
   return computeCollectionStats(watches, entries);
+});
+
+/// Smart rotation suggestions (issue #17): watches ranked by how overdue they
+/// are for a wearing, most neglected first. Derived from the watch list and the
+/// full wear log, so it refreshes whenever either changes.
+final rotationSuggestionsProvider =
+    FutureProvider<List<RotationSuggestion>>((ref) async {
+  final watches = await ref.watch(watchListProvider.future);
+  final entries = await ref.watch(allWearHistoryProvider.future);
+  return computeRotationSuggestions(watches, entries);
 });

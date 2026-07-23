@@ -12,6 +12,8 @@ import 'package:watch_collection/features/collection/domain/watch_repository.dar
 import 'package:watch_collection/features/collection/presentation/collection_providers.dart';
 import 'package:watch_collection/features/collection/presentation/distribution_chart.dart';
 import 'package:watch_collection/features/collection/presentation/stats_page.dart';
+import 'package:watch_collection/features/pro/data/in_memory_pro_repository.dart';
+import 'package:watch_collection/features/pro/presentation/pro_providers.dart';
 
 /// A repository returning a fixed set of watches, so the derived brand and
 /// movement distributions are deterministic.
@@ -31,6 +33,7 @@ Widget _wrap(WatchRepository watchRepository) {
       watchPhotoRepositoryProvider
           .overrideWithValue(InMemoryWatchPhotoRepository()),
       wearLogRepositoryProvider.overrideWithValue(InMemoryWearLogRepository()),
+      proRepositoryProvider.overrideWithValue(InMemoryProRepository()),
     ],
     child: const MaterialApp(home: StatsPage()),
   );
